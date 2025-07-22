@@ -24,11 +24,8 @@ fn main() {
     };
 
     let mut file_contents: String = String::new();
-    match file.read_to_string(&mut file_contents) {
-        Err(why) => {
-            eprintln!("Couldn't read from {}: {}", path.display(), why);
-            exit(3);
-        },
-        Ok(_) => print!("{}", file_contents)
-    };
+    if let Err(why) = file.read_to_string(&mut file_contents) {
+        eprintln!("Couldn't read from {}: {}", path.display(), why);
+        exit(3);
+    }
 }
