@@ -1,7 +1,4 @@
 [package]
 name = "distributed-job-queue"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
-
-[dependencies]
-ssh = "0.1.4"
