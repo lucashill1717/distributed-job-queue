@@ -1,0 +1,5 @@
+{
+    "source": "wiki/data.xml",
+    "action": "link_freqs",
+    "hosts": []
+}
