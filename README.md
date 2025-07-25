@@ -3,7 +3,7 @@ This project is meant to make me a better systems engineer, while teaching mysel
 
 ## Concept
 Derive information from Wikipedia dump. Possibilities: 
-- Link frequencies
-- Word frequencies
-- Name frequencies
-- Build link graph
+- Link Frequencies
+- Internal Link Graph
+- Keyword Extraction
+- Article Summarization
