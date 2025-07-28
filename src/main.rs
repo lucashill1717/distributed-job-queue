@@ -1,8 +1,16 @@
+use serde::Deserialize;
 use std::env::args;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::process::exit;
+
+#[derive(Deserialize)]
+struct UserInput {
+    source: String,
+    actions: Vec<String>,
+    hosts: Vec<String>
+}
 
 fn main() {
     let args: Vec<String> = args().collect();
@@ -28,4 +36,6 @@ fn main() {
         eprintln!("Couldn't read from {}: {}", path.display(), why);
         exit(3);
     }
+
+    let user_input: UserInput = serde_json::from_str(&file_contents);
 }
