@@ -37,5 +37,11 @@ fn main() {
         exit(3);
     }
 
-    let user_input: UserInput = serde_json::from_str(&file_contents);
+    let user_input: UserInput = match serde_json::from_str(&file_contents) {
+        Err(why) => {
+            eprintln!("Parsing input {} failed: {}", path.display(), why);
+            exit(4);
+        },
+        Ok(user_input) => user_input
+    };
 }
