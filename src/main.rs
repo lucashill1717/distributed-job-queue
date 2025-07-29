@@ -1,24 +1,20 @@
-use serde::Deserialize;
 use std::env::args;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::process::exit;
 
-#[derive(Deserialize)]
-struct UserInput {
-    source: String,
-    actions: Vec<String>,
-    hosts: Vec<String>
-}
+mod client;
+mod server;
 
 fn main() {
     let args: Vec<String> = args().collect();
     let file_name: &String = match args.get(1) {
         None => {
             println!("Running instance as client.");
-            return
-        },
+            client::client();
+            return;
+        }
         Some(file_name) => {
             println!("Running instance as server.");
             file_name
@@ -30,7 +26,7 @@ fn main() {
         Err(why) => {
             eprintln!("Couldn't open {}: {}", path.display(), why);
             exit(1);
-        },
+        }
         Ok(file) => file
     };
 
@@ -40,11 +36,13 @@ fn main() {
         exit(2);
     }
 
-    let user_input: UserInput = match serde_json::from_str(&file_contents) {
+    let user_input: server::UserInput = match serde_json::from_str(&file_contents) {
         Err(why) => {
             eprintln!("Parsing input {} failed: {}", path.display(), why);
             exit(3);
-        },
+        }
         Ok(user_input) => user_input
     };
+
+    server::server(user_input);
 }
