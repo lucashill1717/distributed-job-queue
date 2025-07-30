@@ -17,10 +17,7 @@ fn main() -> ExitCode {
                     eprintln!("Client instance terminated unexpectedly: {}", why);
                     return ExitCode::FAILURE;
                 }
-                Ok(_) => {
-                    println!();
-                    return ExitCode::SUCCESS;
-                }
+                Ok(_) => return ExitCode::SUCCESS
             };
         }
         Some(file_name) => {
