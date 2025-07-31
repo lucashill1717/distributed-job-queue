@@ -1,24 +1,26 @@
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
-    net::TcpListener
-};
+use bincode;
+use futures::{SinkExt, StreamExt};
+use tokio::net::TcpListener;
+use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
-use crate::messages::Message;
+use crate::messages;
 
 #[tokio::main]
 pub async fn client() -> std::io::Result<()> {
     let listener: TcpListener = TcpListener::bind("localhost:20057").await?;
 
     loop {
-        let (mut socket, _) = listener.accept().await?;
+        let (stream, _) = listener.accept().await?;
         tokio::spawn(async move {
-            let mut buf = [0u8; 1024];
-            match socket.read(&mut buf).await {
-                Ok(n) if n > 0 => {
-                    println!("Received {:?}", &buf[..n]);
-                    let _ = socket.write_all(b"ACK").await;
-                }
-                _ => {}
+            let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
+
+            while let Some(Ok(bytes)) = framed.next().await {
+                let start: messages::Start = bincode::deserialize(&bytes).unwrap();
+                println!("Start message received: {:?}", start);
+
+                let done: messages::Done = messages::Done::new(vec!["done :)".to_string()]);
+                let encoded = bincode::serialize(&done).unwrap();
+                let _ = framed.send(encoded.into()).await;
             }
         });
     }

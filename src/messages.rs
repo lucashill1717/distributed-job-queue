@@ -1,13 +1,29 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Start {
-    tasks: Vec<String>,
-    source: String
+    pub tasks: Vec<String>,
+    pub source: String
 }
 
+impl Start {
+    pub fn new(tasks: Vec<String>, source: String) -> Self {
+        Start { tasks, source }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Done {
-    results: Vec<String>
+    pub results: Vec<String>
 }
 
-pub enum Message {
-    Start(Start),
-    Done(Done)
+impl Done {
+    pub fn new(results: Vec<String>) -> Self {
+        Done { results }
+    }
 }
+
+// pub enum Message {
+//     Start(Start),
+//     Done(Done)
+// }
