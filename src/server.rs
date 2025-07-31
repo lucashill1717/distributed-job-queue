@@ -1,9 +1,10 @@
+use serde::Deserialize;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpStream
 };
 
-use serde::Deserialize;
+use crate::messages::Message;
 
 #[derive(Deserialize)]
 pub struct UserInput {

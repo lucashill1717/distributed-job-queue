@@ -3,6 +3,8 @@ use tokio::{
     net::TcpListener
 };
 
+use crate::messages::Message;
+
 #[tokio::main]
 pub async fn client() -> std::io::Result<()> {
     let listener: TcpListener = TcpListener::bind("localhost:20057").await?;

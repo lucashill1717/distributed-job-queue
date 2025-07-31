@@ -7,6 +7,7 @@ use std::{
 };
 
 mod client;
+mod messages;
 mod server;
 
 fn main() -> ExitCode {
