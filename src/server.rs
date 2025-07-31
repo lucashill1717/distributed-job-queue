@@ -1,5 +1,7 @@
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpStream
+};
 
 use serde::Deserialize;
 

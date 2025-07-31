@@ -1,8 +1,10 @@
-use std::env;
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
-use std::process::ExitCode;
+use std::{
+    env,
+    fs::File,
+    io::Read,
+    path::Path,
+    process::ExitCode
+};
 
 mod client;
 mod server;
