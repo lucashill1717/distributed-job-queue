@@ -7,7 +7,7 @@ use crate::messages;
 
 #[tokio::main]
 pub async fn client() -> std::io::Result<()> {
-    let listener: TcpListener = TcpListener::bind("localhost:20057").await?;
+    let listener: TcpListener = TcpListener::bind("0.0.0.0:20057").await?;
 
     loop {
         let (stream, _) = listener.accept().await?;
