@@ -18,13 +18,18 @@ pub async fn server(user_input: UserInput) -> std::io::Result<()> {
     let stream: TcpStream = TcpStream::connect("localhost:20057").await?;
     let mut framed: Framed<TcpStream, LengthDelimitedCodec> = Framed::new(stream, LengthDelimitedCodec::new());
 
-    let start: messages::Start = messages::Start::new(user_input.actions, user_input.source);
+    let start = messages::Message::Start(messages::Start::new(user_input.actions, user_input.source));
     let encoded: Vec<u8> = bincode::serialize(&start).unwrap();
     framed.send(encoded.into()).await.unwrap();
 
     if let Some(Ok(bytes)) = framed.next().await {
-        let done: messages::Done = bincode::deserialize(&bytes).unwrap();
-        println!("Done message received: {:?}", done);
+        let message: messages::Message = bincode::deserialize(&bytes).unwrap();
+        match message {
+            messages::Message::Done(done) => {
+                println!("Done message received: {:?}", done);
+            }
+            _ => {}
+        }
     }
 
     Ok(())

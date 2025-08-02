@@ -15,10 +15,15 @@ pub async fn client() -> std::io::Result<()> {
             let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
 
             while let Some(Ok(bytes)) = framed.next().await {
-                let start: messages::Start = bincode::deserialize(&bytes).unwrap();
-                println!("Start message received: {:?}", start);
+                let message: messages::Message = bincode::deserialize(&bytes).unwrap();
+                match message {
+                    messages::Message::Start(start) => {
+                        println!("Start message received: {:?}", start)
+                    }
+                    _ => {}
+                }
 
-                let done: messages::Done = messages::Done::new(vec!["done :)".to_string()]);
+                let done = messages::Message::Done(messages::Done::new(vec!["done :)".to_string()]));
                 let encoded = bincode::serialize(&done).unwrap();
                 let _ = framed.send(encoded.into()).await;
             }

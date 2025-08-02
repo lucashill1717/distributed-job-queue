@@ -23,7 +23,8 @@ impl Done {
     }
 }
 
-// pub enum Message {
-//     Start(Start),
-//     Done(Done)
-// }
+#[derive(Deserialize, Serialize, Debug)]
+pub enum Message {
+    Start(Start),
+    Done(Done)
+}
