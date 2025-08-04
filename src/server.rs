@@ -1,7 +1,10 @@
 use bincode;
 use futures::{SinkExt, StreamExt};
 use serde::Deserialize;
-use tokio::net::TcpStream;
+use tokio::{
+    net::TcpListener,
+    spawn
+};
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
 use crate::messages;
@@ -15,22 +18,21 @@ pub struct UserInput {
 
 #[tokio::main]
 pub async fn server(user_input: UserInput) -> std::io::Result<()> {
-    let stream: TcpStream = TcpStream::connect("localhost:20057").await?;
-    let mut framed: Framed<TcpStream, LengthDelimitedCodec> = Framed::new(stream, LengthDelimitedCodec::new());
+    let listener = TcpListener::bind("0.0.0.0:20057").await?;
 
-    let start = messages::Message::Start(messages::Start::new(user_input.actions, user_input.source));
-    let encoded: Vec<u8> = bincode::serialize(&start).unwrap();
-    framed.send(encoded.into()).await.unwrap();
-
-    if let Some(Ok(bytes)) = framed.next().await {
-        let message: messages::Message = bincode::deserialize(&bytes).unwrap();
-        match message {
-            messages::Message::Done(done) => {
-                println!("Done message received: {:?}", done);
+    loop {
+        let (stream, _) = listener.accept().await?;
+        spawn(async move {
+            let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
+            while let Some(Ok(bytes)) = framed.next().await {
+                let message: messages::Message = bincode::deserialize(&bytes).unwrap();
+                match message {
+                    messages::Message::Start(start) => {
+                        println!("Start message received: {:?}", start)
+                    }
+                    _ => {}
+                }
             }
-            _ => {}
-        }
+        });
     }
-
-    Ok(())
 }
