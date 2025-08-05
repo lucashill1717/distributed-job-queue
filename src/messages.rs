@@ -46,5 +46,6 @@ impl Done {
 #[derive(Deserialize, Serialize, Debug)]
 pub enum Message {
     Ready(Ready),
+    Job(Job),
     Done(Done)
 }

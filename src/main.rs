@@ -43,7 +43,7 @@ fn main() -> ExitCode {
             println!("Running instance as client.");
             match client::client(client::ClientInfo { server_name: server }) {
                 Err(why) => {
-                    eprintln!("Client instance terminated unexpectedly: {}", why);
+                    eprintln!("Client instance terminated unexpectedly: {why}");
                     return ExitCode::FAILURE;
                 }
                 Ok(_) => return ExitCode::SUCCESS
@@ -58,7 +58,7 @@ fn main() -> ExitCode {
     let path: &Path = Path::new(&file_path);
     let mut file: File = match File::open(&path) {
         Err(why) => {
-            eprintln!("Couldn't open {}: {}", path.display(), why);
+            eprintln!("Couldn't open {}: {why}", path.display());
             return ExitCode::FAILURE;
         }
         Ok(file) => file
@@ -66,13 +66,13 @@ fn main() -> ExitCode {
 
     let mut file_contents: String = String::new();
     if let Err(why) = file.read_to_string(&mut file_contents) {
-        eprintln!("Couldn't read from {}: {}", path.display(), why);
+        eprintln!("Couldn't read from {}: {why}", path.display());
         return ExitCode::FAILURE;
     }
 
     let server_info: server::ServerInfo = match serde_json::from_str(&file_contents) {
         Err(why) => {
-            eprintln!("Parsing input {} failed: {}", path.display(), why);
+            eprintln!("Parsing input {} failed: {why}", path.display());
             return ExitCode::FAILURE;
         }
         Ok(server_info) => server_info
@@ -80,7 +80,7 @@ fn main() -> ExitCode {
 
     match server::server(server_info) {
         Err(why) => {
-            eprintln!("Server instance terminated unexpectedly: {}", why);
+            eprintln!("Server instance terminated unexpectedly: {why}");
             return ExitCode::FAILURE;
         }
         Ok(_) => {

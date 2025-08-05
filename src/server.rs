@@ -17,7 +17,6 @@ pub struct ServerInfo {
 
 #[tokio::main]
 pub async fn server(info: ServerInfo) -> std::io::Result<()> {
-    println!("{:?}", info);
     let listener = TcpListener::bind("0.0.0.0:20057").await?;
 
     loop {
@@ -28,7 +27,7 @@ pub async fn server(info: ServerInfo) -> std::io::Result<()> {
                 let message: messages::Message = bincode::deserialize(&bytes).unwrap();
                 match message {
                     messages::Message::Ready(ready) => {
-                        println!("Ready message received: {:?}", ready)
+                        println!("Ready message received: {ready:?}")
                     }
                     _ => {}
                 }
