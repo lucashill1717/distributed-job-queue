@@ -13,11 +13,11 @@ pub struct ClientInfo {
 
 #[tokio::main]
 pub async fn client(info: ClientInfo) -> std::io::Result<()> {
-    let stream = TcpStream::connect("localhost:20057").await?;
+    let stream = TcpStream::connect(format!("{}:20057", info.server_name)).await?;
     let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
 
-    let start = messages::Message::Start(messages::Start { tasks: vec![], source: "".to_string() });
-    let encoded: Vec<u8> = bincode::serialize(&start).unwrap();
+    let ready = messages::Message::Ready(messages::Ready::new(8));
+    let encoded: Vec<u8> = bincode::serialize(&ready).unwrap();
     framed.send(encoded.into()).await.unwrap();
 
     Ok(())

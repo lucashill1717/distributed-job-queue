@@ -70,15 +70,15 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    let user_input: server::ServerInfo = match serde_json::from_str(&file_contents) {
+    let server_info: server::ServerInfo = match serde_json::from_str(&file_contents) {
         Err(why) => {
             eprintln!("Parsing input {} failed: {}", path.display(), why);
             return ExitCode::FAILURE;
         }
-        Ok(user_input) => user_input
+        Ok(server_info) => server_info
     };
 
-    match server::server(user_input) {
+    match server::server(server_info) {
         Err(why) => {
             eprintln!("Server instance terminated unexpectedly: {}", why);
             return ExitCode::FAILURE;

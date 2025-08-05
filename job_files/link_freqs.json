@@ -1,6 +1,6 @@
 {
     "source": "wiki/data.xml",
     "actions": [
-        "link_freqs"
+        "LinkFrequencies"
     ]
 }
