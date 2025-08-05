@@ -10,14 +10,13 @@ use tokio_util::codec::{Framed, LengthDelimitedCodec};
 use crate::messages;
 
 #[derive(Deserialize)]
-pub struct UserInput {
-    source: String,
-    actions: Vec<String>,
-    // hosts: Vec<String>
+pub struct ServerInfo {
+    pub source: String,
+    pub actions: Vec<String>
 }
 
 #[tokio::main]
-pub async fn server(user_input: UserInput) -> std::io::Result<()> {
+pub async fn server(info: ServerInfo) -> std::io::Result<()> {
     let listener = TcpListener::bind("0.0.0.0:20057").await?;
 
     loop {

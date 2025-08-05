@@ -1,12 +1,18 @@
 use bincode;
 use futures::{SinkExt, StreamExt};
+use serde::Deserialize;
 use tokio::net::TcpStream;
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
 use crate::messages;
 
+#[derive(Deserialize)]
+pub struct ClientInfo {
+    pub server_name: String
+}
+
 #[tokio::main]
-pub async fn client() -> std::io::Result<()> {
+pub async fn client(info: ClientInfo) -> std::io::Result<()> {
     let stream = TcpStream::connect("localhost:20057").await?;
     let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
 
