@@ -3,7 +3,7 @@ use num_cpus;
 use serde::Deserialize;
 
 use std::{
-    io::Write,
+    io::{Read, Write},
     net::TcpStream
 };
 
@@ -14,23 +14,30 @@ pub struct ClientInfo {
     pub server_name: String
 }
 
-// Convert to simple thread based.
-// Get CPU count
-// loop {
-//   Request #CPU tasks
-//   Process tasks with standard library threads
-//   Send back accumulated results
-// }
-
 /// Sends messages::Message with length-delimited encoding.
 fn send_message(stream: &mut TcpStream, message: messages::Message) -> std::io::Result<()> {
     let encoded: Vec<u8> = bincode::serialize(&message).unwrap();
     let length: [u8; 4] = (encoded.len() as u32).to_be_bytes();
 
-    stream.write(&length)?;
+    stream.write_all(&length)?;
     stream.write_all(&encoded)?;
 
     Ok(())
+}
+
+/// Reads stream into messages::Message with length-delimited encoding.
+fn read_message(stream: &mut TcpStream) -> std::io::Result<messages::Message> {
+    let mut length_buf = [0u8; 4];
+    stream.read_exact(&mut length_buf)?;
+
+    let length = u32::from_be_bytes(length_buf);
+    println!("Length: {}", length);
+    let mut message_buf: Vec<u8> = vec![0u8; length as usize];
+    stream.read_exact(&mut message_buf)?;
+    println!("Message buffer: {:?}", message_buf);
+
+    let message: messages::Message = bincode::deserialize(&message_buf).unwrap();
+    Ok(message)
 }
 
 pub fn client(info: ClientInfo) -> std::io::Result<()> {
@@ -40,6 +47,14 @@ pub fn client(info: ClientInfo) -> std::io::Result<()> {
     let mut stream = TcpStream::connect(addr)?;
     let ready = messages::Message::Ready(messages::Ready::new(cpu_count));
     send_message(&mut stream, ready)?;
+
+    let message = read_message(&mut stream)?;
+    match message {
+        messages::Message::Job(job) => {
+            println!("Job received: {:?}", job);
+        }
+        _ => {}
+    }
 
     Ok(())
 }
