@@ -1,11 +1,10 @@
 use bincode;
 use futures::{SinkExt, StreamExt};
 use serde::Deserialize;
-use tokio::{
-    net::TcpListener,
-    spawn
-};
+use tokio::net::TcpListener;
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
+
+use tokio::runtime::Handle;
 
 use crate::messages;
 
@@ -21,7 +20,7 @@ pub async fn server(info: ServerInfo) -> std::io::Result<()> {
 
     loop {
         let (stream, _) = listener.accept().await?;
-        spawn(async move {
+        tokio::spawn(async move {
             let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
             while let Some(Ok(bytes)) = framed.next().await {
                 let message: messages::Message = bincode::deserialize(&bytes).unwrap();
