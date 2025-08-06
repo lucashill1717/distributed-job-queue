@@ -1,4 +1,11 @@
+use bincode;
+use num_cpus;
 use serde::Deserialize;
+
+use std::{
+    io::Write,
+    net::TcpStream
+};
 
 use crate::messages;
 
@@ -15,26 +22,24 @@ pub struct ClientInfo {
 //   Send back accumulated results
 // }
 
-pub fn client(info: ClientInfo) -> std::io::Result<()> {
+/// Sends messages::Message with length-delimited encoding.
+fn send_message(stream: &mut TcpStream, message: messages::Message) -> std::io::Result<()> {
+    let encoded: Vec<u8> = bincode::serialize(&message).unwrap();
+    let length: [u8; 4] = (encoded.len() as u32).to_be_bytes();
+
+    stream.write(&length)?;
+    stream.write_all(&encoded)?;
+
     Ok(())
 }
 
-// #[tokio::main]
-// pub async fn client(info: ClientInfo) -> std::io::Result<()> {
-//     let worker_count = Handle::current().metrics().num_workers();
-//     let (job_tx, job_rx) = channel::<messages::Message>(worker_count);
-//     let (result_tx, result_rx) = channel::<messages::Message>(worker_count);
+pub fn client(info: ClientInfo) -> std::io::Result<()> {
+    let cpu_count = num_cpus::get() as u8;
+    let addr = format!("{}:20057", info.server_name);
 
-//     let stream = TcpStream::connect(format!("{}:20057", info.server_name)).await?;
-//     let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
+    let mut stream = TcpStream::connect(addr)?;
+    let ready = messages::Message::Ready(messages::Ready::new(cpu_count));
+    send_message(&mut stream, ready)?;
 
-//     loop {
-//         let live_task_count = Handle::current().metrics().num_alive_tasks() as u8;
-//         let ready = messages::Message::Ready(messages::Ready::new(worker_count as u8 - live_task_count));
-//         let encoded: Vec<u8> = bincode::serialize(&ready).unwrap();
-//         framed.send(encoded.into()).await?;
-//         break;
-//     }
-
-//     Ok(())
-// }
+    Ok(())
+}
