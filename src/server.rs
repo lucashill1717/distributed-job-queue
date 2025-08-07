@@ -21,7 +21,7 @@ pub async fn server(info: ServerInfo) -> std::io::Result<()> {
         tokio::spawn(async move {
             let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
             while let Some(Ok(bytes)) = framed.next().await {
-                let message: messages::Message = bincode::deserialize(&bytes).unwrap();
+                let message = bincode::deserialize::<messages::Message>(&bytes).unwrap();
                 match message {
                     messages::Message::Ready(ready) => {
                         println!("Ready message received: {ready:?}");

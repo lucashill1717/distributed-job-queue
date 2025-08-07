@@ -3,7 +3,7 @@ use num_cpus;
 use serde::Deserialize;
 
 use std::{
-    io::{Read, Write},
+    io::{ErrorKind, Read, Write},
     net::TcpStream
 };
 
@@ -34,8 +34,10 @@ fn read_message(stream: &mut TcpStream) -> std::io::Result<messages::Message> {
     let mut message_buf: Vec<u8> = vec![0u8; length as usize];
     stream.read_exact(&mut message_buf)?;
 
-    let message: messages::Message = bincode::deserialize(&message_buf).unwrap();
-    Ok(message)
+    match bincode::deserialize::<messages::Message>(&message_buf) {
+        Ok(message) => Ok(message),
+        Err(why) => Err(std::io::Error::new(ErrorKind::InvalidData, why))
+    }
 }
 
 pub fn client(info: ClientInfo) -> std::io::Result<()> {
