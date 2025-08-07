@@ -16,7 +16,8 @@ pub struct ClientInfo {
 
 /// Sends messages::Message with length-delimited encoding.
 fn send_message(stream: &mut TcpStream, message: messages::Message) -> std::io::Result<()> {
-    let encoded: Vec<u8> = bincode::serialize(&message).unwrap();
+    let encoded: Vec<u8> = bincode::serialize(&message)
+        .map_err(|why| std::io::Error::new(ErrorKind::InvalidData, why))?;
     let length: [u8; 4] = (encoded.len() as u32).to_be_bytes();
 
     stream.write_all(&length)?;
