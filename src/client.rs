@@ -31,10 +31,8 @@ fn read_message(stream: &mut TcpStream) -> std::io::Result<messages::Message> {
     stream.read_exact(&mut length_buf)?;
 
     let length = u32::from_be_bytes(length_buf);
-    println!("Length: {}", length);
     let mut message_buf: Vec<u8> = vec![0u8; length as usize];
     stream.read_exact(&mut message_buf)?;
-    println!("Message buffer: {:?}", message_buf);
 
     let message: messages::Message = bincode::deserialize(&message_buf).unwrap();
     Ok(message)
