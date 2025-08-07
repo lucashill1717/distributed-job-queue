@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicU32, Ordering};
+
 use bincode;
 use futures::{SinkExt, StreamExt};
 use serde::Deserialize;
@@ -5,6 +7,8 @@ use tokio::net::TcpListener;
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
 use crate::messages;
+
+static JOB_ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 #[derive(Deserialize, Debug)]
 pub struct ServerInfo {
@@ -25,7 +29,8 @@ pub async fn server(info: ServerInfo) -> std::io::Result<()> {
                 match message {
                     messages::Message::Ready(ready) => {
                         println!("Ready message received: {ready:?}");
-                        let job = messages::Message::Job(messages::Job::new(0, "".to_string(), vec![]));
+                        let job_id: u32 = JOB_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
+                        let job = messages::Message::Job(messages::Job::new(job_id, "".to_string(), vec![]));
                         let encoded: Vec<u8> = bincode::serialize(&job).unwrap();
                         framed.send( encoded.into()).await;
                     }
