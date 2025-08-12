@@ -3,6 +3,7 @@ use num_cpus;
 use serde::Deserialize;
 
 use std::{
+    collections::HashMap,
     io::{ErrorKind, Read, Write},
     net::TcpStream
 };
@@ -56,6 +57,10 @@ pub fn client(info: ClientInfo) -> std::io::Result<()> {
         }
         _ => {}
     }
+
+    let map = HashMap::<u32, HashMap::<messages::Action, String>>::new();
+    let done= messages::Message::Done(messages::Done::new(map));
+    send_message(&mut stream, done)?;
 
     Ok(())
 }

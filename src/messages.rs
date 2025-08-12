@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -11,7 +13,7 @@ impl Ready {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(PartialEq, Eq, Hash, Deserialize, Serialize, Debug)]
 pub enum Action {
     LinkFrequencies,
     LinkGraph,
@@ -34,11 +36,11 @@ impl Job {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Done {
-    pub results: Vec<String>
+    pub results: HashMap<u32, HashMap<Action, String>>
 }
 
 impl Done {
-    pub fn new(results: Vec<String>) -> Self {
+    pub fn new(results: HashMap<u32, HashMap<Action, String>>) -> Self {
         Done { results }
     }
 }

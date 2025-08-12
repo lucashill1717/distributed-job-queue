@@ -34,6 +34,9 @@ pub async fn server(info: ServerInfo) -> std::io::Result<()> {
                         let encoded: Vec<u8> = bincode::serialize(&job).unwrap();
                         framed.send( encoded.into()).await;
                     }
+                    messages::Message::Done(done) => {
+                        println!("Done message received: {done:?}");
+                    }
                     _ => {}
                 }
             }
