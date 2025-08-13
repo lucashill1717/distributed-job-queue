@@ -41,6 +41,7 @@ pub async fn server(info: ServerInfo) -> std::io::Result<()> {
                     }
                     Message::Done(done) => {
                         println!("Done message received: {done:?}");
+                        break;
                     }
                     _ => {}
                 }
