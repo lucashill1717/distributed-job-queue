@@ -13,7 +13,7 @@ impl Ready {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Deserialize, Serialize, Debug)]
+#[derive(Clone, Copy, Deserialize, Eq, Hash, PartialEq, Serialize, Debug)]
 pub enum Action {
     LinkFrequencies,
     LinkGraph,
