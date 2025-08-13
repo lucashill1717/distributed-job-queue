@@ -52,8 +52,8 @@ pub fn client(info: ClientInfo) -> std::io::Result<()> {
 
     let message = read_message(&mut stream)?;
     match message {
-        Message::Job(job) => {
-            println!("Job received: {:?}", job);
+        Message::Task(task) => {
+            println!("Task received: {:?}", task);
         }
         _ => {}
     }

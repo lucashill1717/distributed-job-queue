@@ -22,15 +22,15 @@ pub enum Action {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct Job {
+pub struct Task {
     pub id: u32,
     pub data: String,
     pub actions: Vec<Action>
 }
 
-impl Job {
+impl Task {
     pub fn new(id: u32, data: String, actions: Vec<Action>) -> Self {
-        Job { id, data, actions }
+        Task { id, data, actions }
     }
 }
 
@@ -48,6 +48,6 @@ impl Done {
 #[derive(Deserialize, Serialize, Debug)]
 pub enum Message {
     Ready(Ready),
-    Job(Job),
+    Task(Task),
     Done(Done)
 }
