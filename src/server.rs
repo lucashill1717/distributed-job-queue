@@ -54,9 +54,7 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
                     framed.send( encoded.into()).await;
 
                     job_count += 1;
-                    if job_count == ready.task_count {
-                        break;
-                    }
+                    if job_count == ready.task_count { break }
                 }
             }
             Message::Done(done) => {
