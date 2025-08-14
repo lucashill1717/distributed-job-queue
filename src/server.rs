@@ -1,6 +1,4 @@
-use std::fs::File;
 use std::io::ErrorKind;
-use std::path::Path;
 use std::sync::{
     Arc,
     atomic::{AtomicU32, Ordering}
@@ -10,6 +8,8 @@ use bincode;
 use futures::{SinkExt, StreamExt};
 use serde::Deserialize;
 use tokio::{
+    fs::File,
+    io::{AsyncBufReadExt, BufReader},
     net::{TcpListener, TcpStream},
     sync::{mpsc, Mutex}
 };
@@ -37,13 +37,34 @@ impl Job {
 }
 
 async fn queue_builder(tx: mpsc::Sender<Job>, source: String) -> std::io::Result<()> {
-    let path: &Path = Path::new(&source);
-    let file = File::open(path)?;
-    loop {
-        let job_id: u32 = JOB_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
-        tx.send(Job::new(job_id, "".to_string())).await.map_err(| why |
-            std::io::Error::new(ErrorKind::BrokenPipe, why))?;
+    let file = File::open(source).await?;
+    let reader = BufReader::new(file);
+    let mut lines = reader.lines();
+
+    let mut in_page = false;
+    let mut buffer = String::new();
+    while let Some(line) = lines.next_line().await? {
+        if !in_page {
+            if line.contains("<page>") {
+                in_page = true;
+                buffer.push_str(&line);
+            }
+        } else {
+            buffer.push_str(&line);
+
+            if line.contains("</page>") {
+                in_page = false;
+
+                let job_id: u32 = JOB_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
+                tx.send(Job::new(job_id, buffer.clone())).await.map_err(|why|
+                    std::io::Error::new(ErrorKind::BrokenPipe, why))?;
+
+                buffer.clear();
+            }
+        }
     }
+
+    Ok(())
 }
 
 async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, cloned_actions: Arc<Vec<Action>>) {
