@@ -1,3 +1,6 @@
+use std::fs::File;
+use std::io::ErrorKind;
+use std::path::Path;
 use std::sync::{
     Arc,
     atomic::{AtomicU32, Ordering}
@@ -8,7 +11,7 @@ use futures::{SinkExt, StreamExt};
 use serde::Deserialize;
 use tokio::{
     net::{TcpListener, TcpStream},
-    sync::{Mutex, mpsc}
+    sync::{mpsc, Mutex}
 };
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
 
@@ -33,10 +36,13 @@ impl Job {
     }
 }
 
-async fn queue_builder(tx: mpsc::Sender<Job>, source: String) {
+async fn queue_builder(tx: mpsc::Sender<Job>, source: String) -> std::io::Result<()> {
+    let path: &Path = Path::new(&source);
+    let file = File::open(path)?;
     loop {
         let job_id: u32 = JOB_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
-        tx.send(Job::new(job_id, "".to_string())).await;
+        tx.send(Job::new(job_id, "".to_string())).await.map_err(| why |
+            std::io::Error::new(ErrorKind::BrokenPipe, why))?;
     }
 }
 
