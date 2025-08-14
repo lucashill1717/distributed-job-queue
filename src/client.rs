@@ -50,12 +50,13 @@ pub fn client(info: ClientInfo) -> std::io::Result<()> {
     let ready = Message::Ready(Ready::new(cpu_count));
     send_message(&mut stream, ready)?;
 
-    let message = read_message(&mut stream)?;
-    match message {
-        Message::Task(task) => {
-            println!("Task received: {:?}", task);
+    let mut tasks = Vec::<Task>::with_capacity(cpu_count as usize);
+    for _ in 0..cpu_count {
+        let message = read_message(&mut stream)?;
+        match message {
+            Message::Task(task) => tasks.push(task),
+            _ => {}
         }
-        _ => {}
     }
 
     let map = HashMap::<u32, HashMap::<Action, String>>::new();
