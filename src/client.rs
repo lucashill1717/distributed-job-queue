@@ -42,6 +42,16 @@ fn read_message(stream: &mut TcpStream) -> std::io::Result<Message> {
     }
 }
 
+fn process_actions(task: Task) {
+    let out = HashMap::<Action, String>::new();
+    for action in task.actions {
+        match action {
+            Action::LinkFrequencies => {}
+            _ => {}
+        }
+    }
+}
+
 fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap::<u32, HashMap::<Action, String>> {
     let chunk_size = (tasks.len() + cpu_count - 1) / cpu_count;
     let mut handles: Vec<thread::JoinHandle<Vec<()>>> = Vec::new();
@@ -50,7 +60,7 @@ fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap::<u32, HashMap
     for chunk in tasks.chunks(chunk_size) {
         let chunk_vec = chunk.to_vec();
         let handle = thread::spawn(move || {
-            chunk_vec.into_iter().map(|task| ()).collect::<Vec<()>>()
+            chunk_vec.into_iter().map(|task| process_actions(task)).collect::<Vec<()>>()
         });
         handles.push(handle);
     }

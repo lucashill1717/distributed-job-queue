@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 
@@ -25,11 +25,11 @@ pub enum Action {
 pub struct Task {
     pub id: u32,
     pub data: String,
-    pub actions: Vec<Action>
+    pub actions: HashSet<Action>
 }
 
 impl Task {
-    pub fn new(id: u32, data: String, actions: Vec<Action>) -> Self {
+    pub fn new(id: u32, data: String, actions: HashSet<Action>) -> Self {
         Task { id, data, actions }
     }
 }

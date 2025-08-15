@@ -1,7 +1,10 @@
-use std::io::ErrorKind;
-use std::sync::{
-    Arc,
-    atomic::{AtomicU32, Ordering}
+use std::{
+    collections::HashSet,
+    io::ErrorKind,
+    sync::{
+        Arc,
+        atomic::{AtomicU32, Ordering}
+    }
 };
 
 use bincode;
@@ -69,7 +72,7 @@ async fn queue_builder(tx: mpsc::Sender<Job>, source: String) -> std::io::Result
 }
 
 /// Pulls `Job`s from queue, sending them off to a client. Then handles further communication with client.
-async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, cloned_actions: Arc<Vec<Action>>) {
+async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, cloned_actions: Arc<HashSet<Action>>) {
     let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
     while let Some(Ok(bytes)) = framed.next().await {
         let message = bincode::deserialize::<Message>(&bytes).unwrap();
@@ -78,7 +81,7 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
                 println!("Ready message received: {ready:?}");
                 let mut job_count: u8 = 0;
                 while let Some(job) = rx.lock().await.recv().await {
-                    let task = Message::Task(Task::new(job.job_id, job.data, cloned_actions.to_vec()));
+                    let task = Message::Task(Task::new(job.job_id, job.data, (*cloned_actions).clone()));
                     let encoded: Vec<u8> = bincode::serialize(&task).unwrap();
                     framed.send(encoded.into()).await;
 
@@ -98,7 +101,8 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
 /// Job producer. Creates jobs, sends out to clients, and collects returned information.
 #[tokio::main]
 pub async fn server(info: ServerInfo) -> std::io::Result<()> {
-    let actions = Arc::new(info.actions);
+    let actions_set = info.actions.into_iter().collect::<HashSet<Action>>();
+    let actions = Arc::new(actions_set);
     let (tx, rx) = mpsc::channel::<Job>(500);
     let rx = Arc::new(Mutex::new(rx));
 
