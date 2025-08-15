@@ -21,7 +21,7 @@ pub enum Action {
     ArticleSummarization
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Clone, Deserialize, Serialize, Debug)]
 pub struct Task {
     pub id: u32,
     pub data: String,

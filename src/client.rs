@@ -5,7 +5,7 @@ use serde::Deserialize;
 use std::{
     collections::HashMap,
     io::{ErrorKind, Read, Write},
-    net::TcpStream
+    net::TcpStream, thread
 };
 
 use crate::messages::*;
@@ -42,14 +42,35 @@ fn read_message(stream: &mut TcpStream) -> std::io::Result<Message> {
     }
 }
 
+fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap::<u32, HashMap::<Action, String>> {
+    let chunk_size = (tasks.len() + cpu_count - 1) / cpu_count;
+    let mut handles: Vec<thread::JoinHandle<Vec<()>>> = Vec::new();
+
+    // need to replace closure with proper handling function returning result map
+    for chunk in tasks.chunks(chunk_size) {
+        let chunk_vec = chunk.to_vec();
+        let handle = thread::spawn(move || {
+            chunk_vec.into_iter().map(|task| ()).collect::<Vec<()>>()
+        });
+        handles.push(handle);
+    }
+
+    let mut result = HashMap::<u32, HashMap::<Action, String>>::new();
+    for handle in handles {
+        let mut thread_result = handle.join().unwrap();
+    }
+
+    return result;
+}
+
 /// Job consumer. Pulls jobs from server, spins up worker threads for processing, then reports back.
 pub fn client(info: ClientInfo) -> std::io::Result<()> {
-    let cpu_count = num_cpus::get() as u8;
+    let cpu_count = num_cpus::get();
     let addr = format!("{}:20057", info.server_name);
 
     let mut stream = TcpStream::connect(addr)?;
 
-    let ready = Message::Ready(Ready::new(cpu_count));
+    let ready = Message::Ready(Ready::new(cpu_count as u8));
     send_message(&mut stream, ready)?;
 
     let mut tasks = Vec::<Task>::with_capacity(cpu_count as usize);
@@ -61,8 +82,8 @@ pub fn client(info: ClientInfo) -> std::io::Result<()> {
         }
     }
 
-    let map = HashMap::<u32, HashMap::<Action, String>>::new();
-    let done= Message::Done(Done::new(map));
+    let results = process_tasks(tasks, cpu_count);
+    let done= Message::Done(Done::new(results));
     send_message(&mut stream, done)?;
 
     Ok(())
