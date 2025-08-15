@@ -36,6 +36,7 @@ impl Job {
     }
 }
 
+/// Builds up job queue from XML data source. Sends one-page `Job`s into transmitter queue.
 async fn queue_builder(tx: mpsc::Sender<Job>, source: String) -> std::io::Result<()> {
     let file = File::open(source).await?;
     let reader = BufReader::new(file);
@@ -67,6 +68,7 @@ async fn queue_builder(tx: mpsc::Sender<Job>, source: String) -> std::io::Result
     Ok(())
 }
 
+/// Pulls `Job`s from queue, sending them off to a client. Then handles further communication with client.
 async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, cloned_actions: Arc<Vec<Action>>) {
     let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
     while let Some(Ok(bytes)) = framed.next().await {
@@ -78,7 +80,7 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
                 while let Some(job) = rx.lock().await.recv().await {
                     let task = Message::Task(Task::new(job.job_id, job.data, cloned_actions.to_vec()));
                     let encoded: Vec<u8> = bincode::serialize(&task).unwrap();
-                    framed.send( encoded.into()).await;
+                    framed.send(encoded.into()).await;
 
                     job_count += 1;
                     if job_count == ready.task_count { break }
@@ -93,6 +95,7 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
     }
 }
 
+/// Job producer. Creates jobs, sends out to clients, and collects returned information.
 #[tokio::main]
 pub async fn server(info: ServerInfo) -> std::io::Result<()> {
     let actions = Arc::new(info.actions);

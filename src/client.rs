@@ -42,11 +42,13 @@ fn read_message(stream: &mut TcpStream) -> std::io::Result<Message> {
     }
 }
 
+/// Job consumer. Pulls jobs from server, spins up worker threads for processing, then reports back.
 pub fn client(info: ClientInfo) -> std::io::Result<()> {
     let cpu_count = num_cpus::get() as u8;
     let addr = format!("{}:20057", info.server_name);
 
     let mut stream = TcpStream::connect(addr)?;
+
     let ready = Message::Ready(Ready::new(cpu_count));
     send_message(&mut stream, ready)?;
 
