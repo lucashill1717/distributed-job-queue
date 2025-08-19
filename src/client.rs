@@ -56,7 +56,6 @@ fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap::<u32, HashMap
     let chunk_size = (tasks.len() + cpu_count - 1) / cpu_count;
     let mut handles: Vec<thread::JoinHandle<Vec<()>>> = Vec::new();
 
-    // need to replace closure with proper handling function returning result map
     for chunk in tasks.chunks(chunk_size) {
         let chunk_vec = chunk.to_vec();
         let handle = thread::spawn(move || {
