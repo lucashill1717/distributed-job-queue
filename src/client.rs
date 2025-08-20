@@ -1,6 +1,8 @@
 use bincode;
 use num_cpus;
+use unicode_segmentation::UnicodeSegmentation;
 use serde::Deserialize;
+use serde_json::Value;
 
 use std::{
     collections::HashMap,
@@ -42,29 +44,56 @@ fn read_message(stream: &mut TcpStream) -> std::io::Result<Message> {
     }
 }
 
-fn process_actions(task: Task) {
-    let out = HashMap::<Action, String>::new();
-    for action in task.actions {
-        match action {
-            Action::LinkFrequencies => {}
-            _ => {}
+fn get_link_frequencies(data: &String) -> Value {
+    let mut map = HashMap::<String, u8>::new();
+    let mut buf = String::new();
+
+    let mut first_bracket = false;
+    let mut second_bracket = false;
+    for c in data.graphemes(true) {
+        if c == "[" {
+            if !first_bracket { first_bracket = true }
+            else if !second_bracket { second_bracket = true }
+        }
+        if first_bracket && second_bracket {
+            if c == "#" || c == "|" || c == "]" {
+                *map.entry(buf.clone()).or_insert(1) += 1;
+                buf.clear();
+
+                first_bracket = false;
+                second_bracket = false;
+            }
+            else { buf.push_str(c) }
         }
     }
+
+    return serde_json::to_value(map).unwrap();
 }
 
-fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap::<u32, HashMap::<Action, String>> {
+fn process_actions(task: Task) -> HashMap<Action, Value> {
+    let mut out = HashMap::<Action, Value>::new();
+    for action in task.actions {
+        out.insert(action,  match action {
+            Action::LinkFrequencies => get_link_frequencies(&task.data),
+            _ => Value::Null
+        });
+    }
+    return out;
+}
+
+fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap::<u32, HashMap::<Action, Value>> {
     let chunk_size = (tasks.len() + cpu_count - 1) / cpu_count;
-    let mut handles: Vec<thread::JoinHandle<Vec<()>>> = Vec::new();
+    let mut handles: Vec<thread::JoinHandle<Vec<HashMap<Action, Value>>>> = Vec::new();
 
     for chunk in tasks.chunks(chunk_size) {
         let chunk_vec = chunk.to_vec();
         let handle = thread::spawn(move || {
-            chunk_vec.into_iter().map(|task| process_actions(task)).collect::<Vec<()>>()
+            chunk_vec.into_iter().map(|task| process_actions(task)).collect::<Vec<HashMap<Action, Value>>>()
         });
         handles.push(handle);
     }
 
-    let mut result = HashMap::<u32, HashMap::<Action, String>>::new();
+    let mut result = HashMap::<u32, HashMap::<Action, Value>>::new();
     for handle in handles {
         let mut thread_result = handle.join().unwrap();
     }

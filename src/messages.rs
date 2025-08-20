@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Ready {
@@ -36,11 +37,11 @@ impl Task {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Done {
-    pub results: HashMap<u32, HashMap<Action, String>>
+    pub results: HashMap<u32, HashMap<Action, Value>>
 }
 
 impl Done {
-    pub fn new(results: HashMap<u32, HashMap<Action, String>>) -> Self {
+    pub fn new(results: HashMap<u32, HashMap<Action, Value>>) -> Self {
         Done { results }
     }
 }
