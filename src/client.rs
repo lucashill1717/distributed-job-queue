@@ -70,8 +70,8 @@ fn get_link_frequencies(data: &String) -> Value {
     return serde_json::to_value(map).unwrap();
 }
 
-fn process_actions(task: Task) -> HashMap<Action, Value> {
-    let mut out = HashMap::<Action, Value>::new();
+fn process_actions(task: Task) -> ActionResult {
+    let mut out = ActionResult::new();
     for action in task.actions {
         out.insert(action,  match action {
             Action::LinkFrequencies => get_link_frequencies(&task.data),
@@ -81,19 +81,19 @@ fn process_actions(task: Task) -> HashMap<Action, Value> {
     return out;
 }
 
-fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap::<u32, HashMap::<Action, Value>> {
+fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap::<u32, ActionResult> {
     let chunk_size = (tasks.len() + cpu_count - 1) / cpu_count;
-    let mut handles: Vec<thread::JoinHandle<Vec<HashMap<Action, Value>>>> = Vec::new();
+    let mut handles: Vec<thread::JoinHandle<Vec<ActionResult>>> = Vec::new();
 
     for chunk in tasks.chunks(chunk_size) {
         let chunk_vec = chunk.to_vec();
         let handle = thread::spawn(move || {
-            chunk_vec.into_iter().map(|task| process_actions(task)).collect::<Vec<HashMap<Action, Value>>>()
+            chunk_vec.into_iter().map(|task| process_actions(task)).collect::<Vec<ActionResult>>()
         });
         handles.push(handle);
     }
 
-    let mut result = HashMap::<u32, HashMap::<Action, Value>>::new();
+    let mut result = HashMap::<u32, ActionResult>::new();
     for handle in handles {
         let mut thread_result = handle.join().unwrap();
     }

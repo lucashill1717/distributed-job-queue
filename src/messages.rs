@@ -35,13 +35,15 @@ impl Task {
     }
 }
 
+pub type ActionResult = HashMap<Action, Value>;
+
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Done {
-    pub results: HashMap<u32, HashMap<Action, Value>>
+    pub results: HashMap<u32, ActionResult>
 }
 
 impl Done {
-    pub fn new(results: HashMap<u32, HashMap<Action, Value>>) -> Self {
+    pub fn new(results: HashMap<u32, ActionResult>) -> Self {
         Done { results }
     }
 }
