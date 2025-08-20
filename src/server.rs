@@ -1,9 +1,9 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     io::ErrorKind,
     sync::{
-        Arc,
-        atomic::{AtomicU32, Ordering}
+        atomic::{AtomicU32, Ordering},
+        Arc
     }
 };
 
@@ -90,8 +90,19 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
                 }
             }
             Message::Done(done) => {
-                println!("Done message received: {done:?}");
-                break;
+                for result in done.results {
+                    for pair in result.1 {
+                        match pair.0 {
+                            Action::LinkFrequencies => {
+                                let map = serde_json::from_value::<HashMap<String, u8>>(pair.1).unwrap();
+                                println!("Recieved map for job ID {}: {:?}\n", result.0, map);
+                            },
+                            Action::LinkGraph => todo!(),
+                            Action::KeywordExtraction => todo!(),
+                            Action::ArticleSummarization => todo!()
+                        }
+                    }
+                }
             }
             _ => {}
         }
