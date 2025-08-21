@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     io::ErrorKind,
     sync::{
         atomic::{AtomicU32, Ordering},
@@ -75,7 +75,7 @@ async fn queue_builder(tx: mpsc::Sender<Job>, source: String) -> std::io::Result
 async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, cloned_actions: Arc<HashSet<Action>>) {
     let mut framed = Framed::new(stream, LengthDelimitedCodec::new());
     while let Some(Ok(bytes)) = framed.next().await {
-        let message = bincode::deserialize::<Message>(&bytes).unwrap();
+        let message: Message = bincode::deserialize(&bytes).unwrap();
         match message {
             Message::Ready(ready) => {
                 println!("Ready message received: {ready:?}");
@@ -112,7 +112,7 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
 /// Job producer. Creates jobs, sends out to clients, and collects returned information.
 #[tokio::main]
 pub async fn server(info: ServerInfo) -> std::io::Result<()> {
-    let actions_set = info.actions.into_iter().collect::<HashSet<Action>>();
+    let actions_set: HashSet<Action> = info.actions.into_iter().collect();
     let actions = Arc::new(actions_set);
     let (tx, rx) = mpsc::channel::<Job>(500);
     let rx = Arc::new(Mutex::new(rx));

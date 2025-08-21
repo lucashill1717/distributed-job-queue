@@ -2,7 +2,6 @@ use bincode;
 use num_cpus;
 use unicode_segmentation::UnicodeSegmentation;
 use serde::Deserialize;
-use serde_json::Value;
 
 use std::{
     collections::HashMap,
@@ -45,7 +44,7 @@ fn read_message(stream: &mut TcpStream) -> std::io::Result<Message> {
 }
 
 fn get_link_frequencies(data: &String) -> HashMap<String, u8> {
-    let mut map = HashMap::<String, u8>::new();
+    let mut map: HashMap<String, u8> = HashMap::new();
     let mut buf = String::new();
 
     let mut first_bracket = false;
@@ -81,7 +80,7 @@ fn process_actions(task: Task) -> (u32, ActionResult) {
     return (task.id, out);
 }
 
-fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap::<u32, ActionResult> {
+fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap<u32, ActionResult> {
     let chunk_size = (tasks.len() + cpu_count - 1) / cpu_count;
     let mut handles: Vec<thread::JoinHandle<Vec<(u32, ActionResult)>>> = Vec::new();
 
@@ -93,7 +92,7 @@ fn process_tasks(tasks: Vec::<Task>, cpu_count: usize) -> HashMap::<u32, ActionR
         handles.push(handle);
     }
 
-    let mut result = HashMap::<u32, ActionResult>::new();
+    let mut result: HashMap<u32, ActionResult> = HashMap::new();
     for handle in handles {
         for tuple in handle.join().unwrap() {
             result.insert(tuple.0, tuple.1);
@@ -113,7 +112,7 @@ pub fn client(info: ClientInfo) -> std::io::Result<()> {
     let ready = Message::Ready(Ready::new(cpu_count as u8));
     send_message(&mut stream, ready)?;
 
-    let mut tasks = Vec::<Task>::with_capacity(cpu_count as usize);
+    let mut tasks: Vec<Task> = Vec::with_capacity(cpu_count as usize);
     for _ in 0..cpu_count {
         let message = read_message(&mut stream)?;
         match message {
