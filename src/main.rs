@@ -46,7 +46,10 @@ fn main() -> ExitCode {
                     eprintln!("Client instance terminated unexpectedly: {why}");
                     return ExitCode::FAILURE;
                 }
-                Ok(_) => return ExitCode::SUCCESS
+                Ok(_) => {
+                    println!("Client shutdown successfully.");
+                    return ExitCode::SUCCESS;
+                }
             };
         }
         Some(RunTypes::Server { job_file }) => {

@@ -14,6 +14,7 @@ use tokio::{
     fs::File,
     io::{AsyncBufReadExt, BufReader},
     net::{TcpListener, TcpStream},
+    signal::ctrl_c,
     sync::{mpsc, Mutex}
 };
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
@@ -122,13 +123,21 @@ pub async fn server(info: ServerInfo) -> std::io::Result<()> {
     });
 
     let listener = TcpListener::bind("0.0.0.0:20057").await?;
-    loop {
-        let (stream, _) = listener.accept().await?;
-        let cloned_actions = Arc::clone(&actions);
-        let rx = Arc::clone(&rx);
+     tokio::select! {
+        biased;
 
-        tokio::spawn(async move {
-            thread_runner(rx, stream, cloned_actions).await;
-        });
+        _ = ctrl_c() => Ok(()),
+        res = async {
+            loop {
+                let (stream, _) = listener.accept().await?;
+                let cloned_actions = Arc::clone(&actions);
+                let rx = Arc::clone(&rx);
+
+                tokio::spawn(async move {
+                    thread_runner(rx, stream, cloned_actions).await;
+                });
+            }
+        } => res
     }
+    
 }
