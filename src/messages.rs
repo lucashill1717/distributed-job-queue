@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Ready {
@@ -35,7 +34,12 @@ impl Task {
     }
 }
 
-pub type ActionResult = HashMap<Action, Value>;
+#[derive(Deserialize, Serialize, Debug)]
+pub enum ResultType {
+    LinkFrequencies(HashMap<String, u8>)
+}
+
+pub type ActionResult = HashMap<Action, ResultType>;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Done {

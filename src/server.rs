@@ -94,7 +94,7 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
                     for pair in result.1 {
                         match pair.0 {
                             Action::LinkFrequencies => {
-                                let map = serde_json::from_value::<HashMap<String, u8>>(pair.1).unwrap();
+                                let ResultType::LinkFrequencies(map) = pair.1;
                                 println!("Recieved map for job ID {}: {:?}\n", result.0, map);
                             },
                             Action::LinkGraph => todo!(),

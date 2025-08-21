@@ -44,7 +44,7 @@ fn read_message(stream: &mut TcpStream) -> std::io::Result<Message> {
     }
 }
 
-fn get_link_frequencies(data: &String) -> Value {
+fn get_link_frequencies(data: &String) -> HashMap<String, u8> {
     let mut map = HashMap::<String, u8>::new();
     let mut buf = String::new();
 
@@ -55,9 +55,9 @@ fn get_link_frequencies(data: &String) -> Value {
             if !first_bracket { first_bracket = true }
             else if !second_bracket { second_bracket = true }
         }
-        if first_bracket && second_bracket {
+        else if first_bracket && second_bracket {
             if c == "#" || c == "|" || c == "]" {
-                *map.entry(buf.clone()).or_insert(1) += 1;
+                *map.entry(buf.clone()).or_insert(0) += 1;
                 buf.clear();
 
                 first_bracket = false;
@@ -67,16 +67,16 @@ fn get_link_frequencies(data: &String) -> Value {
         }
     }
 
-    return serde_json::to_value(map).unwrap();
+    return map;
 }
 
 fn process_actions(task: Task) -> (u32, ActionResult) {
     let mut out = ActionResult::new();
     for action in task.actions {
-        out.insert(action,  match action {
+        out.insert(action,  ResultType::LinkFrequencies(match action {
             Action::LinkFrequencies => get_link_frequencies(&task.data),
-            _ => Value::Null
-        });
+            _ => HashMap::new()
+        }));
     }
     return (task.id, out);
 }
