@@ -123,7 +123,7 @@ pub async fn server(info: ServerInfo) -> std::io::Result<()> {
     });
 
     let listener = TcpListener::bind("0.0.0.0:20057").await?;
-     tokio::select! {
+    tokio::select! {
         biased;
 
         _ = ctrl_c() => Ok(()),
