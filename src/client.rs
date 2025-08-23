@@ -43,27 +43,88 @@ fn read_message(stream: &mut TcpStream) -> std::io::Result<Message> {
     }
 }
 
+enum ParserState {
+    Nothing,
+    TagStart,
+    TagName,
+    Attrs,
+    Content,
+    TagEnd
+}
+
 fn get_link_frequencies(data: &String) -> HashMap<String, u8> {
     let mut map: HashMap<String, u8> = HashMap::new();
     let mut buf = String::new();
 
+    let mut state = ParserState::Nothing;
+    let mut tag_name_buf = String::new();
     let mut first_bracket = false;
     let mut second_bracket = false;
+    let mut in_text = false;
     for c in data.graphemes(true) {
-        if c == "[" {
-            if !first_bracket { first_bracket = true }
-            else if !second_bracket { second_bracket = true }
-        }
-        else if first_bracket && second_bracket {
-            if c == "#" || c == "|" || c == "]" {
-                *map.entry(buf.clone()).or_insert(0) += 1;
-                buf.clear();
+        state = match state {
+            ParserState::Nothing => match c {
+                "<" => ParserState::TagStart,
+                _ => ParserState::Nothing
+            },
+            ParserState::TagStart => match c {
+                "/" => ParserState::TagEnd,
+                _ if c.is_ascii() => {
+                    tag_name_buf.clear();
+                    tag_name_buf.push_str(c);
+                    ParserState::TagName
+                }
+                _ => ParserState::Nothing
+            },
+            ParserState::TagName => match c {
+                ">" => {
+                    if tag_name_buf == "text" { in_text = true }
+                    tag_name_buf.clear();
+                    ParserState::Content
+                }
+                " " => {
+                    if tag_name_buf == "text" { in_text = true }
+                    tag_name_buf.clear();
+                    ParserState::Attrs
+                },
+                _ => {
+                    tag_name_buf.push_str(c);
+                    ParserState::TagName
+                }
+            },
+            ParserState::Attrs => match c {
+                ">" => ParserState::Content,
+                _ => ParserState::Attrs
+            },
+            ParserState::Content => match c {
+                "<" => ParserState::TagStart,
+                _ if in_text => {
+                    if c == "[" {
+                        if !first_bracket { first_bracket = true }
+                        else if !second_bracket { second_bracket = true }
+                    }
+                    else if first_bracket && second_bracket {
+                        if c == "#" || c == "|" || c == "]" {
+                            *map.entry(buf.clone()).or_insert(0) += 1;
+                            buf.clear();
 
-                first_bracket = false;
-                second_bracket = false;
+                            first_bracket = false;
+                            second_bracket = false;
+                        }
+                        else { buf.push_str(c) }
+                    }
+                    ParserState::Content
+                },
+                _ => ParserState::Content
+            },
+            ParserState::TagEnd => match c {
+                ">" => {
+                    in_text = false;
+                    ParserState::Nothing
+                }
+                _ => ParserState::TagEnd
             }
-            else { buf.push_str(c) }
-        }
+        };
     }
 
     return map;
