@@ -98,9 +98,7 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
                                 let ResultType::LinkFrequencies(map) = pair.1;
                                 println!("Recieved map for job ID {}: {:?}\n", result.0, map);
                             },
-                            Action::LinkGraph => todo!(),
-                            Action::KeywordExtraction => todo!(),
-                            Action::ArticleSummarization => todo!()
+                            _ => todo!()
                         }
                     }
                 }
