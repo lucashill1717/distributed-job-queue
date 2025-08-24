@@ -79,7 +79,6 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
         let message: Message = bincode::deserialize(&bytes).unwrap();
         match message {
             Message::Ready(ready) => {
-                println!("Ready message received: {ready:?}");
                 let mut job_count: u8 = 0;
                 while let Some(job) = rx.lock().await.recv().await {
                     let task = Message::Task(Task::new(job.job_id, job.data, (*cloned_actions).clone()));
@@ -96,7 +95,6 @@ async fn thread_runner(rx: Arc<Mutex<mpsc::Receiver<Job>>>, stream: TcpStream, c
                         match pair.0 {
                             Action::LinkFrequencies => {
                                 let ResultType::LinkFrequencies(map) = pair.1;
-                                println!("Recieved map for job ID {}: {:?}\n", result.0, map);
                             },
                             _ => todo!()
                         }
@@ -134,6 +132,8 @@ pub async fn server(info: ServerInfo) -> std::io::Result<()> {
                 tokio::spawn(async move {
                     thread_runner(rx, stream, cloned_actions).await;
                 });
+
+                // Need to add breaking mechanism
             }
         } => res
     }

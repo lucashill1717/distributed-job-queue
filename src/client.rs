@@ -17,7 +17,7 @@ pub struct ClientInfo {
 }
 
 /// Sends messages::Message with length-delimited encoding.
-fn send_message(stream: &mut TcpStream, message: Message) -> std::io::Result<()> {
+fn send_message(stream: &mut TcpStream, message: &Message) -> std::io::Result<()> {
     let encoded: Vec<u8> = bincode::serialize(&message).map_err(|why|
         std::io::Error::new(ErrorKind::InvalidData, why))?;
     let length: [u8; 4] = (encoded.len() as u32).to_be_bytes();
@@ -52,8 +52,8 @@ enum ParserState {
     TagEnd
 }
 
-fn get_link_frequencies(data: &String) -> HashMap<String, u8> {
-    let mut map: HashMap<String, u8> = HashMap::new();
+fn get_link_frequencies(data: &String) -> HashMap<String, u32> {
+    let mut map: HashMap<String, u32> = HashMap::new();
     let mut buf = String::new();
 
     let mut state = ParserState::Nothing;
@@ -168,23 +168,28 @@ pub fn client(info: ClientInfo) -> std::io::Result<()> {
     let cpu_count = num_cpus::get();
     let addr = format!("{}:20057", info.server_name);
 
-    let mut stream = TcpStream::connect(addr)?;
-
     let ready = Message::Ready(Ready::new(cpu_count as u8));
-    send_message(&mut stream, ready)?;
+    let mut stream = TcpStream::connect(addr)?;
+    loop {
+        send_message(&mut stream, &ready)?;
 
-    let mut tasks: Vec<Task> = Vec::with_capacity(cpu_count as usize);
-    for _ in 0..cpu_count {
-        let message = read_message(&mut stream)?;
-        match message {
-            Message::Task(task) => tasks.push(task),
-            _ => {}
+        let mut tasks: Vec<Task> = Vec::with_capacity(cpu_count as usize);
+        for _ in 0..cpu_count {
+            let message = read_message(&mut stream)?;
+            match message {
+                Message::Task(task) => tasks.push(task),
+                _ => {}
+            }
+        }
+
+        let results = process_tasks(tasks, cpu_count);
+        let done= Message::Done(Done::new(results));
+        send_message(&mut stream, &done)?;
+
+        if false {
+            break
         }
     }
-
-    let results = process_tasks(tasks, cpu_count);
-    let done= Message::Done(Done::new(results));
-    send_message(&mut stream, done)?;
 
     Ok(())
 }

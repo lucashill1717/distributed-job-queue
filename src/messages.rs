@@ -36,7 +36,7 @@ impl Task {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum ResultType {
-    LinkFrequencies(HashMap<String, u8>)
+    LinkFrequencies(HashMap<String, u32>)
 }
 
 pub type ActionResult = HashMap<Action, ResultType>;
